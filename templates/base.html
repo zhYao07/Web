@@ -1,0 +1,123 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}校园助手{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <link href="{% static 'css/style.css' %}" rel="stylesheet">
+</head>
+<body>
+    <!-- 顶部标题栏 -->
+    <div class="header">
+        <div class="header-title">重庆邮电大学计算机科学与技术学院</div>
+        <div class="header-user">
+            <i class="fas fa-user"></i>
+            {{ user.username }}
+        </div>
+    </div>
+
+    <!-- 左侧导航栏 -->
+    <div class="side-nav bg-purple">
+        <ul class="nav-menu">
+            <li>
+                <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                    <i class="fas fa-graduation-cap"></i>
+                    <span>校园助手</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'academic:course_list' %}">
+                    <i class="fas fa-book"></i>
+                    <span>课程</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'academic:schedule' %}">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>课表</span>
+                </a>
+            </li>
+            <li class="has-submenu">
+                <a href="#campusSubmenu">
+                    <i class="fas fa-bullhorn"></i>
+                    <span>校园生活</span>
+                </a>
+                <ul class="submenu" id="campusSubmenu" style="display: block;">
+                    <li>
+                        <a href="{% url 'campus_life:announcement_list' %}" class="{% if 'announcement' in request.path %}active{% endif %}">
+                            <i class="fas fa-bell"></i>
+                            <span>公告</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'campus_life:lost_found_list' %}" class="{% if 'lost_found' in request.path %}active{% endif %}">
+                            <i class="fas fa-search"></i>
+                            <span>失物招领</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'campus_life:activity_list' %}" class="{% if 'activity' in request.path %}active{% endif %}">
+                            <i class="fas fa-users"></i>
+                            <span>校园活动</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            <li>
+                <a href="{% url 'communication:message_list' %}">
+                    <i class="fas fa-envelope"></i>
+                    <span>消息</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'users:logout' %}">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>退出登录</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- 主要内容区域 -->
+    <div class="main-content">
+        {% block content %}{% endblock %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+
+    <!-- 在body标签内，其他内容的最后 -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="toast align-items-center text-white bg-{{ message.tags }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            {{ message }}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var toastElList = [].slice.call(document.querySelectorAll('.toast'));
+            var toastList = toastElList.map(function(toastEl) {
+                var toast = new bootstrap.Toast(toastEl, {
+                    animation: true,
+                    autohide: true,
+                    delay: 3000  // 3秒后自动消失
+                });
+                toast.show();
+                return toast;
+            });
+        });
+    </script>
+</body>
+</html> 

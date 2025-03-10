@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}个人资料 - 校园助手{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card mt-5">
+                <div class="card-body">
+                    <h2 class="card-title">个人资料</h2>
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <p><strong>用户名：</strong> {{ user.username }}</p>
+                            <p><strong>邮箱：</strong> {{ user.email }}</p>
+                            <p><strong>角色：</strong> {{ user.get_role_display }}</p>
+                            {% if user.student_id %}
+                            <p><strong>学号：</strong> {{ user.student_id }}</p>
+                            {% endif %}
+                            {% if user.phone %}
+                            <p><strong>手机号：</strong> {{ user.phone }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

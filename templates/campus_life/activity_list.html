@@ -1,0 +1,261 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- 页面标题和创建按钮 -->
+    <div class="page-header">
+        <div class="header-content">
+            <h2 class="page-title">
+                <i class="fas fa-calendar-alt text-primary me-2"></i>校园活动
+            </h2>
+            <p class="text-muted">发现精彩校园生活，参与丰富多彩的活动</p>
+        </div>
+        <a href="{% url 'campus_life:activity_create' %}" class="btn btn-primary btn-lg">
+            <i class="fas fa-plus me-2"></i>创建活动
+        </a>
+    </div>
+
+    <!-- 活动列表 -->
+    <div class="row g-4">
+        {% for activity in activities %}
+        <div class="col-md-6">
+            <div class="activity-card">
+                <div class="activity-content">
+                    <!-- 活动标题和状态 -->
+                    <div class="activity-header">
+                        <h5 class="activity-title">{{ activity.title }}</h5>
+                        {% if activity.is_full %}
+                        <span class="status-badge full">
+                            <i class="fas fa-users-slash me-1"></i>已满
+                        </span>
+                        {% else %}
+                        <span class="status-badge available">
+                            <i class="fas fa-users me-1"></i>可报名
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <!-- 活动描述 -->
+                    <p class="activity-desc">{{ activity.description|truncatewords:30 }}</p>
+
+                    <!-- 活动信息 -->
+                    <div class="activity-info">
+                        <div class="info-item">
+                            <i class="fas fa-map-marker-alt text-danger"></i>
+                            <span>{{ activity.location }}</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-clock text-warning"></i>
+                            <span>{{ activity.start_time|date:"Y-m-d H:i" }} - {{ activity.end_time|date:"H:i" }}</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-user-friends text-info"></i>
+                            <span>{{ activity.current_participants }}/{{ activity.max_participants }} 人</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-user text-success"></i>
+                            <span>组织者：{{ activity.organizer.username }}</span>
+                        </div>
+                    </div>
+
+                    <!-- 进度条 -->
+                    <div class="progress participation-progress">
+                        <div class="progress-bar {% if activity.is_full %}bg-danger{% else %}bg-success{% endif %}"
+                            role="progressbar"
+                            style="width: {% widthratio activity.current_participants activity.max_participants 100 %}%">
+                        </div>
+                    </div>
+
+                    <!-- 操作按钮 -->
+                    <div class="activity-actions">
+                        <a href="{% url 'campus_life:activity_detail' activity.id %}" class="btn btn-outline-primary">
+                            <i class="fas fa-info-circle me-1"></i>查看详情
+                        </a>
+                        {% if user == activity.organizer %}
+                        <a href="{% url 'campus_life:activity_update' activity.id %}" class="btn btn-outline-warning">
+                            <i class="fas fa-edit me-1"></i>编辑活动
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="empty-state">
+                <i class="fas fa-calendar-times"></i>
+                <h4>暂无活动</h4>
+                <p>目前还没有任何活动信息，快来创建第一个活动吧！</p>
+                <a href="{% url 'campus_life:activity_create' %}" class="btn btn-primary btn-lg mt-3">
+                    <i class="fas fa-plus me-2"></i>创建活动
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    /* 页面标题样式 */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #eee;
+    }
+
+    .page-title {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+
+    /* 活动卡片样式 */
+    .activity-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        overflow: hidden;
+    }
+
+    .activity-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    .activity-content {
+        padding: 1.5rem;
+    }
+
+    /* 活动标题和状态 */
+    .activity-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .activity-title {
+        font-weight: 600;
+        color: #2c3e50;
+        margin: 0;
+    }
+
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .status-badge.available {
+        background: rgba(40, 167, 69, 0.1);
+        color: #28a745;
+    }
+
+    .status-badge.full {
+        background: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+    }
+
+    /* 活动描述 */
+    .activity-desc {
+        color: #6c757d;
+        margin-bottom: 1.5rem;
+        line-height: 1.5;
+    }
+
+    /* 活动信息 */
+    .activity-info {
+        margin-bottom: 1.5rem;
+    }
+
+    .info-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        color: #495057;
+    }
+
+    .info-item i {
+        width: 20px;
+        margin-right: 0.5rem;
+    }
+
+    /* 进度条 */
+    .participation-progress {
+        height: 8px;
+        border-radius: 4px;
+        background-color: #e9ecef;
+        margin-bottom: 1.5rem;
+    }
+
+    .progress-bar {
+        border-radius: 4px;
+        transition: width 0.6s ease;
+    }
+
+    /* 按钮样式 */
+    .activity-actions {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .btn {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .btn-outline-primary:hover,
+    .btn-outline-warning:hover {
+        transform: translateY(-2px);
+    }
+
+    /* 空状态样式 */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        color: #dee2e6;
+        margin-bottom: 1.5rem;
+    }
+
+    .empty-state h4 {
+        color: #2c3e50;
+        margin-bottom: 1rem;
+    }
+
+    .empty-state p {
+        color: #6c757d;
+        margin-bottom: 2rem;
+    }
+
+    /* 响应式调整 */
+    @media (max-width: 768px) {
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .activity-actions {
+            flex-direction: column;
+        }
+
+        .activity-actions .btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}

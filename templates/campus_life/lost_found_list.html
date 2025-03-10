@@ -1,0 +1,330 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- 页面标题和发布按钮 -->
+    <div class="page-header">
+        <div class="header-content">
+            <h2 class="page-title">
+                <i class="fas fa-search text-primary me-2"></i>失物招领
+            </h2>
+            <p class="text-muted">帮助失主找回失物，传递校园温暖</p>
+        </div>
+        <a href="{% url 'campus_life:lost_found_create' %}" class="btn btn-primary btn-lg">
+            <i class="fas fa-plus me-2"></i>发布信息
+        </a>
+    </div>
+
+    <!-- 搜索栏 -->
+    <div class="search-bar">
+        <form method="get" class="search-form">
+            <div class="input-group">
+                <input type="text" name="search" class="form-control" placeholder="搜索失物信息..."
+                    value="{{ search_query }}">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search me-2"></i>搜索
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- 失物列表 -->
+    <div class="lost-found-grid">
+        {% for item in lost_founds %}
+        <div class="lost-found-card hover-lift">
+            <div class="item-image">
+                {% if item.image %}
+                <img src="{{ item.image.url }}" alt="{{ item.title }}" class="img-fluid">
+                {% else %}
+                <div class="no-image">
+                    <i class="fas fa-image"></i>
+                </div>
+                {% endif %}
+            </div>
+            <div class="item-content">
+                <div class="item-header">
+                    <h5 class="item-title">{{ item.title }}</h5>
+                    <span
+                        class="status-badge {% if item.status == 'lost' %}lost{% elif item.status == 'claimed' %}claimed{% else %}completed{% endif %}">
+                        <i
+                            class="fas {% if item.status == 'lost' %}fa-search{% elif item.status == 'claimed' %}fa-hand-holding{% else %}fa-check{% endif %} me-1"></i>
+                        {{ item.get_status_display }}
+                    </span>
+                </div>
+
+                <div class="item-description">
+                    {{ item.description|linebreaks|truncatewords:30 }}
+                </div>
+
+                <div class="item-info">
+                    <div class="info-item">
+                        <i class="fas fa-map-marker-alt text-danger"></i>
+                        <span>{{ item.location }}</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-phone text-success"></i>
+                        <span>{{ item.contact }}</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-user text-primary"></i>
+                        <span>{{ item.user.username }}</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-clock text-info"></i>
+                        <span>{{ item.created_at|date:"Y-m-d H:i" }}</span>
+                    </div>
+                </div>
+
+                {% if user == item.user %}
+                <div class="item-actions">
+                    <a href="{% url 'campus_life:lost_found_update' item.id %}" class="btn btn-outline-warning btn-sm">
+                        <i class="fas fa-edit me-1"></i>编辑
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state">
+            <i class="fas fa-search"></i>
+            <h4>暂无信息</h4>
+            <p>还没有任何失物招领信息</p>
+            <a href="{% url 'campus_life:lost_found_create' %}" class="btn btn-primary btn-lg mt-3">
+                <i class="fas fa-plus me-2"></i>发布信息
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    /* 页面标题样式 */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #eee;
+    }
+
+    .page-title {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+
+    /* 搜索栏样式 */
+    .search-bar {
+        margin-bottom: 2rem;
+    }
+
+    .search-form .form-control {
+        border-radius: 10px 0 0 10px;
+        border: 2px solid #eee;
+        padding: 0.8rem 1.2rem;
+    }
+
+    .search-form .btn {
+        border-radius: 0 10px 10px 0;
+        padding: 0.8rem 1.5rem;
+    }
+
+    /* 失物列表网格 */
+    .lost-found-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+
+    /* 失物卡片样式 */
+    .lost-found-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    /* 图片容器样式 */
+    .item-image {
+        position: relative;
+        width: 100%;
+        padding-top: 56.25%;
+        overflow: hidden;
+        background-color: #f8f9fa;
+    }
+
+    .item-image img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        transition: transform 0.3s ease;
+    }
+
+    /* 没有图片时的占位样式 */
+    .no-image {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f8f9fa;
+        color: #adb5bd;
+    }
+
+    .no-image i {
+        font-size: 3rem;
+    }
+
+    .item-content {
+        padding: 1.5rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .item-title {
+        font-weight: 600;
+        color: #2c3e50;
+        margin: 0;
+    }
+
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .status-badge.lost {
+        background: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+    }
+
+    .status-badge.claimed {
+        background: rgba(255, 193, 7, 0.1);
+        color: #ffc107;
+    }
+
+    .status-badge.completed {
+        background: rgba(40, 167, 69, 0.1);
+        color: #28a745;
+    }
+
+    .item-description {
+        color: #495057;
+        line-height: 1.6;
+        margin-bottom: 1.5rem;
+    }
+
+    .item-info {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    .item-actions {
+        display: flex;
+        justify-content: flex-end;
+        padding-top: 1rem;
+        border-top: 1px solid #eee;
+    }
+
+    /* 悬停效果 */
+    .hover-lift:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    /* 空状态样式 */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+        grid-column: 1 / -1;
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        color: #dee2e6;
+        margin-bottom: 1.5rem;
+    }
+
+    .empty-state h4 {
+        color: #2c3e50;
+        margin-bottom: 1rem;
+    }
+
+    .empty-state p {
+        color: #6c757d;
+        margin-bottom: 2rem;
+    }
+
+    /* 按钮样式 */
+    .btn {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .btn-lg {
+        padding: 0.8rem 1.5rem;
+    }
+
+    .btn-sm {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.875rem;
+    }
+
+    /* 响应式调整 */
+    @media (max-width: 768px) {
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .search-form {
+            width: 100%;
+        }
+
+        .lost-found-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .item-info {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}

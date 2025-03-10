@@ -1,0 +1,380 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- 页面标题 -->
+    <div class="page-header">
+        <div class="header-content">
+            <h2 class="page-title">
+                <i class="fas fa-book text-primary me-2"></i>选课中心
+            </h2>
+            <p class="text-muted">查看和管理您的课程</p>
+        </div>
+    </div>
+
+    <!-- 在已选课程部分之前添加搜索栏 -->
+    <div class="search-section mb-4">
+        <form method="get" class="search-form">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" name="search" class="form-control" placeholder="搜索课程名称..."
+                            value="{{ search_query }}">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select name="college" class="form-select">
+                        <option value="">所有学院</option>
+                        {% for code, name in college_choices %}
+                            <option value="{{ code }}" {% if current_college == code %}selected{% endif %}>
+                                {{ name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="teacher" class="form-select">
+                        <option value="">所有教师</option>
+                        {% for teacher in teachers %}
+                            <option value="{{ teacher.username }}" {% if current_teacher == teacher.username %}selected{% endif %}>
+                                {{ teacher.username }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search me-2"></i>搜索
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- 已选课程部分 -->
+    <div class="section-header">
+        <h3><i class="fas fa-check-circle text-success me-2"></i>已选课程</h3>
+    </div>
+    <div class="course-grid">
+        {% for enrollment in enrolled_courses %}
+        <div class="course-card hover-lift">
+            <div class="course-content">
+                <div class="course-header">
+                    <h5 class="course-title">{{ enrollment.course.name }}</h5>
+                    <span class="course-code">{{ enrollment.course.code }}</span>
+                </div>
+
+                <div class="course-info">
+                    <div class="info-item">
+                        <i class="fas fa-user-tie text-primary"></i>
+                        <span>{{ enrollment.course.teacher.username }}</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-graduation-cap text-info"></i>
+                        <span>{{ enrollment.course.get_college_display }}</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-star text-warning"></i>
+                        <span>{{ enrollment.course.credit }} 学分</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-clock text-success"></i>
+                        <span>{{ enrollment.course.get_weekday_display }} {{ enrollment.course.start_time|time:"H:i" }}-{{ enrollment.course.end_time|time:"H:i" }}</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-map-marker-alt text-danger"></i>
+                        <span>{{ enrollment.course.classroom }}</span>
+                    </div>
+                </div>
+
+                <div class="course-actions">
+                    <a href="{% url 'academic:course_detail' enrollment.course.id %}"
+                        class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-info-circle me-1"></i>详情
+                    </a>
+                    <form method="post" action="{% url 'academic:drop_course' enrollment.course.id %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-danger btn-sm"
+                            onclick="return confirm('确定要退选该课程吗？')">
+                            <i class="fas fa-times me-1"></i>退选
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state">
+            <i class="fas fa-book-open"></i>
+            <h4>暂无已选课程</h4>
+            <p>您还没有选择任何课程</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- 可选课程部分 -->
+    <div class="section-header mt-5">
+        <h3><i class="fas fa-list text-primary me-2"></i>可选课程</h3>
+    </div>
+    <div class="course-grid">
+        {% for course in available_courses %}
+        <div class="course-card hover-lift">
+            <div class="course-content">
+                <div class="course-header">
+                    <h5 class="course-title">{{ course.name }}</h5>
+                    <span class="course-code">{{ course.code }}</span>
+                </div>
+
+                <div class="course-info">
+                    <div class="info-item">
+                        <i class="fas fa-user-tie text-primary"></i>
+                        <span>{{ course.teacher.username }}</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-graduation-cap text-info"></i>
+                        <span>{{ course.get_college_display }}</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-star text-warning"></i>
+                        <span>{{ course.credit }} 学分</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-clock text-success"></i>
+                        <span>{{ course.get_weekday_display }} {{ course.start_time|time:"H:i" }}-{{ course.end_time|time:"H:i" }}</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-map-marker-alt text-danger"></i>
+                        <span>{{ course.classroom }}</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-users text-secondary"></i>
+                        <span>{{ course.enrolled }}/{{ course.capacity }}</span>
+                    </div>
+                </div>
+
+                <div class="course-actions">
+                    <a href="{% url 'academic:course_detail' course.id %}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-info-circle me-1"></i>详情
+                    </a>
+                    {% if course.enrolled < course.capacity %} <form method="post"
+                        action="{% url 'academic:enroll_course' course.id %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-success btn-sm">
+                            <i class="fas fa-plus me-1"></i>选课
+                        </button>
+                        </form>
+                        {% else %}
+                        <button class="btn btn-outline-secondary btn-sm" disabled>
+                            <i class="fas fa-ban me-1"></i>已满
+                        </button>
+                        {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state">
+            <i class="fas fa-book"></i>
+            <h4>暂无可选课程</h4>
+            <p>当前没有可以选择的课程</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    /* 页面标题样式 */
+    .page-header {
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #eee;
+    }
+
+    .page-title {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+
+    /* 分区标题样式 */
+    .section-header {
+        margin-bottom: 1.5rem;
+    }
+
+    .section-header h3 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    /* 课程网格布局 */
+    .course-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+
+    /* 课程卡片样式 */
+    .course-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .course-content {
+        padding: 1.5rem;
+    }
+
+    .course-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+
+    .course-title {
+        font-weight: 600;
+        color: #2c3e50;
+        margin: 0;
+        font-size: 1.1rem;
+    }
+
+    .course-code {
+        font-size: 0.875rem;
+        color: #6c757d;
+        background: #f8f9fa;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+    }
+
+    .course-info {
+        margin-bottom: 1.5rem;
+    }
+
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.5rem;
+        color: #495057;
+        font-size: 0.95rem;
+    }
+
+    .info-item i {
+        width: 16px;
+        text-align: center;
+    }
+
+    .course-actions {
+        display: flex;
+        gap: 0.5rem;
+        padding-top: 1rem;
+        border-top: 1px solid #eee;
+    }
+
+    /* 悬停效果 */
+    .hover-lift:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    /* 空状态样式 */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+        grid-column: 1 / -1;
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        color: #dee2e6;
+        margin-bottom: 1.5rem;
+    }
+
+    .empty-state h4 {
+        color: #2c3e50;
+        margin-bottom: 1rem;
+    }
+
+    .empty-state p {
+        color: #6c757d;
+        margin-bottom: 2rem;
+    }
+
+    /* 按钮样式 */
+    .btn {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .btn-sm {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.875rem;
+    }
+
+    /* 响应式调整 */
+    @media (max-width: 768px) {
+        .course-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .course-actions {
+            flex-wrap: wrap;
+        }
+
+        .course-actions .btn {
+            flex: 1;
+            min-width: 120px;
+        }
+    }
+
+    /* 搜索栏样式 */
+    .search-section {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 15px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+    }
+
+    .search-form .input-group-text {
+        background-color: transparent;
+        border-right: none;
+    }
+
+    .search-form .form-control {
+        border-left: none;
+    }
+
+    .search-form .form-control:focus {
+        box-shadow: none;
+        border-color: #ced4da;
+    }
+
+    .search-form .form-select {
+        border-radius: 8px;
+    }
+
+    .search-form .btn {
+        height: 100%;
+    }
+
+    /* 响应式调整 */
+    @media (max-width: 768px) {
+        .search-section {
+            padding: 1rem;
+        }
+
+        .search-form .btn {
+            margin-top: 1rem;
+        }
+    }
+</style>
+{% endblock %}

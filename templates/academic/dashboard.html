@@ -1,0 +1,412 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}校园助手 - 仪表盘{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- 顶部统计卡片 -->
+    <div class="row g-4 mb-4">
+        <!-- 今日课程数 -->
+        <div class="col-md-3">
+            <a href="{% url 'academic:schedule' %}" class="stat-link">
+                <div class="stat-card hover-lift">
+                    <div class="stat-icon purple-gradient">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 class="stat-number">{{ today_courses_count }}</h3>
+                        <p class="stat-label">今日课程</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- 教务通知 -->
+        <div class="col-md-3">
+            <a href="{% url 'campus_life:announcement_list' %}" class="stat-link">
+                <div class="stat-card hover-lift">
+                    <div class="stat-icon pink-gradient">
+                        <i class="fas fa-bullhorn"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 class="stat-number">{{ announcements }}</h3>
+                        <p class="stat-label">教务通知</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- 社交动态 -->
+        <div class="col-md-3">
+            <a href="{% url 'communication:message_list' %}" class="stat-link">
+                <div class="stat-card hover-lift">
+                    <div class="stat-icon green-gradient">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 class="stat-number">{{ social_updates }}</h3>
+                        <p class="stat-label">社交动态</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- 活动信息 -->
+        <div class="col-md-3">
+            <a href="{% url 'campus_life:activity_list' %}" class="stat-link">
+                <div class="stat-card hover-lift">
+                    <div class="stat-icon orange-gradient">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 class="stat-number">{{ activities }}</h3>
+                        <p class="stat-label">活动信息</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- 主要内容区域 -->
+    <div class="row g-4">
+        <!-- 左侧课程列表 -->
+        <div class="col-md-4">
+            <div class="content-card"> <!-- 卡片容器-->
+                <div class="card-header-custom"><!--自定义头部样式-->
+                    <h5><i class="fas fa-book-reader text-primary me-2"></i>今日课程</h5> <!--书本图标-->
+                </div>
+                <div class="card-body-custom">
+                    {% if today_courses %}  <!--试图文件定义的  today_courses-->
+                    <div class="course-list custom-scrollbar">
+                        {% for course in today_courses %}
+                        <div class="course-item hover-lift">
+                            <div class="course-time">{{ course.time_slot }}</div>
+                            <div class="course-info">
+                                <div class="course-name">{{ course.name }}</div>
+                                <div class="course-location">
+                                    <i class="fas fa-map-marker-alt text-danger"></i> {{ course.classroom }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-calendar-day"></i>
+                        <p>今天没有课程安排</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 中间考试倒计时 -->
+        <div class="col-md-4">
+            <div class="content-card">
+                <div class="card-header-custom">
+                    <h5><i class="fas fa-clock text-warning me-2"></i>考试倒计时</h5>
+                </div>
+                <div class="card-body-custom">
+                    {% if upcoming_exams %}
+                    <div class="exam-list custom-scrollbar">
+                        {% for exam in upcoming_exams %}
+                        <div class="exam-item hover-lift">
+                            <div class="exam-info">
+                                <div class="exam-name">{{ exam.course.name }}</div>
+                                <div class="exam-details">
+                                    <div><i class="fas fa-map-marker-alt text-danger"></i> {{ exam.location }}</div>
+                                    <div><i class="fas fa-clock text-info"></i> {{ exam.date|date:"Y-m-d H:i" }}</div>
+                                    <div><i class="fas fa-hourglass-half text-success"></i> {{ exam.duration }}分钟</div>
+                                </div>
+                            </div>
+                            <div
+                                class="countdown-badge {% if exam.days_until <= 3 %}danger-gradient{% elif exam.days_until <= 7 %}warning-gradient{% else %}info-gradient{% endif %}">
+                                {{ exam.days_until }}天
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-calendar-check"></i>
+                        <p>暂无考试安排</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧消费图表 -->
+        <div class="col-md-4">
+            <div class="content-card">
+                <div class="card-header-custom">
+                    <h5><i class="fas fa-chart-line text-success me-2"></i>消费统计</h5>
+                </div>
+                <div class="card-body-custom">
+                    <div class="total-consumption">
+                        <span class="amount">¥{{ total_consumption }}</span>
+                        <span class="label">本周总消费</span>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="consumptionChart"></canvas>   <!--引入chart.js渲染折线图，通过canvas进行绘制-->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* 容器样式 */
+    .dashboard-container {
+        padding: 2rem;
+        background-color: #f8f9fa;
+    }
+
+    /* 统计卡片样式 */
+    .stat-link {
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+    }
+
+    .hover-lift:hover {  /*悬停效果*/
+        transform: translateY(-5px);
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    /* 渐变背景 */
+    .purple-gradient {
+        background: linear-gradient(45deg, #6f42c1, #8e44ad);
+    }
+
+    .pink-gradient {
+        background: linear-gradient(45deg, #e83e8c, #fd79a8);
+    }
+
+    .green-gradient {
+        background: linear-gradient(45deg, #28a745, #20c997);
+    }
+
+    .orange-gradient {
+        background: linear-gradient(45deg, #fd7e14, #ffa502);
+    }
+
+    .danger-gradient {
+        background: linear-gradient(45deg, #dc3545, #ff6b6b);
+    }
+
+    .warning-gradient {
+        background: linear-gradient(45deg, #ffc107, #ffd43b);
+    }
+
+    .info-gradient {
+        background: linear-gradient(45deg, #17a2b8, #4dc0b5);
+    }
+
+    /* 图标样式 */
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+    }
+
+    .stat-icon i {
+        font-size: 1.5rem;
+        color: white;
+    }
+
+    /* 内容卡片样式 */
+    .content-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .card-header-custom {
+        padding: 1.25rem;
+        background: linear-gradient(to right, #f8f9fa, white);
+        border-bottom: 1px solid #eee;
+    }
+
+    .card-header-custom h5 {
+        margin: 0;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .card-body-custom {
+        padding: 1.25rem;
+    }
+
+    /* 课程列表样式 */
+    .course-list {
+        max-height: 350px;
+        overflow-y: auto;
+    }
+
+    .course-item {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .course-time {
+        color: #6f42c1;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+
+    /* 考试列表样式 */
+    .exam-list {
+        max-height: 350px;
+        overflow-y: auto;
+    }
+
+    .exam-item {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .exam-name {
+        font-weight: bold;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+
+    .exam-details {
+        color: #666;
+        font-size: 0.9em;
+    }
+
+    .countdown-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        color: white;
+        font-weight: bold;
+    }
+
+    /* 消费统计样式 */
+    .total-consumption {
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .total-consumption .amount {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #28a745;
+        display: block;
+    }
+
+    .total-consumption .label {
+        color: #666;
+        font-size: 0.9em;
+    }
+
+    /* 空状态样式 */
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: #adb5bd;
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+
+    /* 自定义滚动条 */
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 3px;
+    }
+
+    /* 图表容器 */
+    .chart-container {
+        height: 300px;
+        position: relative;
+    }
+</style>
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // 获取 canvas 元素的 2D 渲染上下文
+    var ctx = document.getElementById('consumptionChart').getContext('2d');
+
+    // 初始化 Chart.js 折线图实例
+    var consumptionChart = new Chart(ctx, {
+        type: 'line', // 图表类型：折线图
+        data: {
+            // 横轴标签（日期），通过 Django 模板语法动态生成
+            labels: [{% for date in consumption_data.keys %}'{{ date }}',{% endfor %}],
+    datasets: [{
+        label: '每日消费', // 数据集标签
+        // 数据点（每日消费金额），通过 Django 模板语法动态生成
+        data: [{% for amount in consumption_data.values %}{{ amount }}, {% endfor %}],
+        borderColor: '#28a745', // 折线颜色：绿色
+            backgroundColor: 'rgba(40, 167, 69, 0.1)', // 填充颜色：半透明绿色
+                borderWidth: 2, // 折线宽度
+                    tension: 0.4, // 曲线平滑度（0 为折线，1 为平滑曲线）
+                        fill: true // 启用折线下方的填充
+            }]
+        },
+    options: {
+        responsive: true, // 启用响应式布局
+            maintainAspectRatio: false, // 自定义宽高比，禁用默认的宽高比保持
+                plugins: {
+            legend: {
+                display: false // 隐藏图例（折线图只有一条线，无需显示图例）
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true, // Y 轴从零开始
+                    grid: {
+                    display: false // 隐藏 Y 轴的网格线
+                }
+            },
+            x: {
+                grid: {
+                    display: false // 隐藏 X 轴的网格线
+                }
+            }
+        }
+    }
+    });
+</script>
+
+{% endblock %}
+{% endblock %}

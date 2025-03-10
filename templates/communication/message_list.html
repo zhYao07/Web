@@ -1,0 +1,274 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- 页面标题和新建按钮 -->
+    <div class="page-header">
+        <div class="header-content">
+            <h2 class="page-title">
+                <i class="fas fa-comments text-primary me-2"></i>我的消息
+            </h2>
+            <p class="text-muted">查看和管理您的消息记录</p>
+        </div>
+        <a href="{% url 'communication:message_create' %}" class="btn btn-primary btn-lg">
+            <i class="fas fa-paper-plane me-2"></i>发送消息
+        </a>
+    </div>
+
+    <!-- 消息导航标签 -->
+    <div class="message-tabs">
+        <a href="?tab=received" class="tab-item {% if active_tab == 'received' %}active{% endif %}">
+            <i class="fas fa-inbox me-2"></i>收到的消息
+        </a>
+        <a href="?tab=sent" class="tab-item {% if active_tab == 'sent' %}active{% endif %}">
+            <i class="fas fa-paper-plane me-2"></i>发送的消息
+        </a>
+    </div>
+
+    <!-- 消息列表 -->
+    <div class="message-list">
+        {% if messages_list %}
+        {% for message in messages_list %}
+        <div class="message-card hover-lift">
+            <div class="message-content">
+                <div class="message-header">
+                    <div class="user-info">
+                        <i class="fas fa-user-circle text-primary"></i>
+                        {% if active_tab == 'received' %}
+                        <span class="from">来自：{{ message.sender.username }}</span>
+                        {% else %}
+                        <span class="to">发送给：{{ message.receiver.username }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="message-time">
+                        <i class="fas fa-clock text-muted"></i>
+                        {{ message.created_at|date:"Y-m-d H:i" }}
+                    </div>
+                </div>
+
+                <div class="message-body">
+                    <h5 class="message-title">{{ message.subject }}</h5>
+                    <div class="message-text">{{ message.content|linebreaks }}</div>
+                </div>
+
+                <div class="message-actions">
+                    <a href="{% url 'communication:message_detail' message.id %}"
+                        class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-eye me-1"></i>查看详情
+                    </a>
+                    {% if active_tab == 'received' %}
+                    <a href="{% url 'communication:message_reply' message.id %}" class="btn btn-outline-success btn-sm">
+                        <i class="fas fa-reply me-1"></i>回复
+                    </a>
+                    {% endif %}
+                    <form method="post" action="{% url 'communication:message_delete' message.id %}" class="d-inline"
+                        onsubmit="return confirm('确定要删除这条消息吗？');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                            <i class="fas fa-trash-alt me-1"></i>删除
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-inbox"></i>
+            <h4>暂无消息</h4>
+            <p>{% if active_tab == 'received' %}您还没有收到任何消息{% else %}您还没有发送任何消息{% endif %}</p>
+            <a href="{% url 'communication:message_create' %}" class="btn btn-primary btn-lg mt-3">
+                <i class="fas fa-paper-plane me-2"></i>发送消息
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    /* 页面标题样式 */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #eee;
+    }
+
+    .page-title {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+
+    /* 消息标签样式 */
+    .message-tabs {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        background: white;
+        padding: 0.5rem;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .tab-item {
+        padding: 0.8rem 1.5rem;
+        border-radius: 8px;
+        color: #6c757d;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .tab-item:hover {
+        background: #f8f9fa;
+        color: #2c3e50;
+    }
+
+    .tab-item.active {
+        background: #e9ecef;
+        color: #2c3e50;
+        font-weight: 500;
+    }
+
+    /* 消息卡片样式 */
+    .message-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+        margin-bottom: 1.5rem;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        overflow: hidden;
+    }
+
+    .message-content {
+        padding: 1.5rem;
+    }
+
+    .message-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #495057;
+    }
+
+    .user-info i {
+        font-size: 1.25rem;
+    }
+
+    .message-time {
+        color: #6c757d;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .message-body {
+        margin-bottom: 1.5rem;
+    }
+
+    .message-title {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+
+    .message-text {
+        color: #495057;
+        line-height: 1.6;
+    }
+
+    .message-actions {
+        display: flex;
+        gap: 0.5rem;
+        padding-top: 1rem;
+        border-top: 1px solid #eee;
+    }
+
+    /* 悬停效果 */
+    .hover-lift:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    /* 空状态样式 */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        color: #dee2e6;
+        margin-bottom: 1.5rem;
+    }
+
+    .empty-state h4 {
+        color: #2c3e50;
+        margin-bottom: 1rem;
+    }
+
+    .empty-state p {
+        color: #6c757d;
+        margin-bottom: 2rem;
+    }
+
+    /* 按钮样式 */
+    .btn {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .btn-lg {
+        padding: 0.8rem 1.5rem;
+    }
+
+    .btn-sm {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.875rem;
+    }
+
+    /* 响应式调整 */
+    @media (max-width: 768px) {
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .message-tabs {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .message-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .message-actions {
+            flex-wrap: wrap;
+        }
+
+        .message-actions .btn {
+            flex: 1;
+            min-width: 120px;
+        }
+    }
+</style>
+{% endblock %}

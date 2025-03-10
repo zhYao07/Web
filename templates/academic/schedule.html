@@ -1,0 +1,218 @@
+{% extends 'base.html' %}
+{% load academic_tags %}
+
+{% block content %}
+<div class="schedule-container">
+    <div class="schedule-header">
+        <h2 class="page-title">
+            <i class="fas fa-calendar-alt text-primary me-2"></i>我的课表
+        </h2>
+        <p class="text-muted">本学期课程安排</p>
+    </div>
+
+    <div class="schedule-card">
+        <div class="table-responsive">
+            <table class="schedule-table">
+                <thead>
+                    <tr>
+                        <th class="time-column">时间</th>
+                        {% for day in weekdays.values %}
+                        <th class="day-column">{{ day }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for slot, slot_name in time_slots.items %}
+                    <tr>
+                        <td class="time-slot">
+                            <div class="time-label">
+                                <div class="slot-name">第{{ slot }}节</div>
+                                <div class="slot-time">{{ slot_name|slice:"4:" }}</div>
+                            </div>
+                        </td>
+                        {% for day in weekdays.keys %}
+                        <td class="course-slot">
+                            {% with course_data=schedule|get_item:slot|get_item:day %}
+                            {% if course_data %}
+                            <a href="{% url 'academic:course_detail' course_data.id %}" class="course-card hover-lift">
+                                <div class="course-name">{{ course_data.name }}</div>
+                                <div class="course-info">
+                                    <div class="course-teacher">
+                                        <i class="fas fa-user-tie"></i> {{ course_data.teacher.username }}
+                                    </div>
+                                    <div class="course-location">
+                                        <i class="fas fa-map-marker-alt"></i> {{ course_data.classroom }}
+                                    </div>
+                                </div>
+                            </a>
+                            {% endif %}
+                            {% endwith %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+    .schedule-container {
+        padding: 2rem;
+        background-color: #f8f9fa;
+    }
+
+    .schedule-header {
+        margin-bottom: 2rem;
+    }
+
+    .page-title {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+
+    .schedule-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+    }
+
+    .schedule-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 1px;
+    }
+
+    .schedule-table th,
+    .schedule-table td {
+        padding: 0;
+        vertical-align: top;
+    }
+
+    /* 表头样式 */
+    .schedule-table thead th {
+        background: linear-gradient(to right, #f8f9fa, white);
+        padding: 1rem;
+        text-align: center;
+        font-weight: 600;
+        color: #2c3e50;
+        border-bottom: 1px solid #eee;
+    }
+
+    .time-column {
+        width: 120px;
+    }
+
+    .day-column {
+        width: calc((100% - 120px) / 7);
+    }
+
+    /* 时间槽样式 */
+    .time-slot {
+        padding: 1rem;
+        background: #f8f9fa;
+        text-align: center;
+        border-right: 1px solid #eee;
+        vertical-align: middle;
+    }
+
+    .time-label {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .slot-name {
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 1rem;
+    }
+
+    .slot-time {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    /* 课程卡片样式 */
+    .course-slot {
+        height: 120px;
+        padding: 0.5rem;
+        border: 1px solid #eee;
+    }
+
+    .course-card {
+        display: block;
+        height: 100%;
+        padding: 0.75rem;
+        background-color: #e3f2fd;
+        border-radius: 10px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .course-name {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+        line-height: 1.2;
+        color: #000000;
+    }
+
+    .course-info {
+        font-size: 0.85rem;
+        opacity: 0.9;
+        color: #333333;
+    }
+
+    .course-teacher,
+    .course-location {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.25rem;
+    }
+
+    .course-teacher i,
+    .course-location i {
+        margin-right: 0.5rem;
+        font-size: 0.8rem;
+    }
+
+    /* 响应式调整 */
+    @media (max-width: 768px) {
+        .schedule-container {
+            padding: 1rem;
+        }
+
+        .time-column {
+            width: 80px;
+        }
+
+        .course-slot {
+            height: 100px;
+        }
+
+        .course-name {
+            font-size: 0.85rem;
+        }
+
+        .course-info {
+            font-size: 0.75rem;
+        }
+    }
+
+    /* 悬停效果 */
+    .hover-lift {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .hover-lift:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(227, 242, 253, 0.4);
+        text-decoration: none;
+    }
+</style>
+{% endblock %}
